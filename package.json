@@ -1,0 +1,19 @@
+{
+  "name": "hyperginx",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "dht-rpc": "^4.9.6"
+  },
+  "dependencies": {
+    "hyperswarm": "^2.15.3",
+    "pump": "^3.0.0",
+    "sha256-wasm": "^2.1.2"
+  }
+}
