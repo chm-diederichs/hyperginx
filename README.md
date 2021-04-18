@@ -43,10 +43,10 @@ Log currently active services
 
 Instantiate a new reverse proxy. `opts` may be used to pass options to the hyperswarm constructor.
 
-#### `fwd.register(domain, port)`
+#### `rev.register(domain, port)`
 
 Register a new domain and specify on which local port connections should be forwarded to.
 
-#### `fwd.getServices()`
+#### `rev.getServices()`
 
 Log currently active services
