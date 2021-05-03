@@ -3,9 +3,9 @@ const net = require('net')
 const http = require('http')
 const dht = require('dht-rpc')
 
-const keepAliveAgent = new http.Agent({ keepAlive: true });
+const keepAliveAgent = new http.Agent({ keepAlive: true })
 
-var bootstrap = dht({ ephemeral: true })
+const bootstrap = dht({ ephemeral: true })
 bootstrap.listen(10001)
 
 bootstrap.on('ready', () => {
@@ -38,17 +38,17 @@ bootstrap.on('ready', () => {
     agent: keepAliveAgent,
     method: 'GET',
     headers: {
-      "Content-Type": "text/plain",
+      'Content-Type': 'text/plain',
       'Content-Length': responseString.length
     }
   }
 
   const req = http.request(options, (res) => {
     res.on('data', (chunk) => {
-      console.log(`server says: ${chunk}`);
+      console.log(`server says: ${chunk}`)
     })
     res.on('end', () => {
-      console.log('all done.');
+      console.log('all done.')
     })
   }).on('error', err => console.log('error_', err))
 

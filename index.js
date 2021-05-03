@@ -1,12 +1,13 @@
 const net = require('net')
 const hyperswarm = require('hyperswarm')
 const pump = require('pump')
-const hash = require('sha256-wasm')
+const Hash = require('sha256-wasm')
 
 class Forward {
   constructor (domain, opts) {
     this.domain = domain
-    this.services = new Map()
+    this._services = new Map()
+    this.reverse = false
 
     this.swarm = hyperswarm(opts)
     this._ready = false
@@ -28,7 +29,7 @@ class Forward {
       })
     }).listen(port)
 
-    this.services.set(topic, {
+    this._services.set(topic, {
       prefix,
       port
     })
@@ -36,10 +37,8 @@ class Forward {
     console.log('listening on port', port)
   }
 
-  getServices () {
-    for (let {service, port} of this.services) {
-      console.log(service, 'listening on port', port)
-    }
+  get services () {
+    return Array.from(this._services)
   }
 }
 
@@ -47,7 +46,8 @@ class Reverse {
   constructor (opts) {
     const self = this
     this.swarm = hyperswarm(opts)
-    this.services = new Map()
+    this._services = new Map()
+    this.reverse = true
 
     this.swarm.on('connection', (conn, info) => {
       let topic = null
@@ -55,11 +55,15 @@ class Reverse {
 
       conn.once('readable', () => {
         topic = conn.read(32).toString('hex')
-        destination = self.services.get(topic)
+        destination = self._services.get(topic).connection
 
         pump(conn, destination, conn, (err) => {
           if (err) throw err
-          console.log('pump ended')
+
+          const info = self._services.get(topic)
+          self._services.delete(topic)
+
+          console.log(info.url, 'stopped listening on port', info.port)
         })
       })
     })
@@ -68,19 +72,23 @@ class Reverse {
   }
 
   register (url, port) {
+    console.log('register', url, port)
     const topic = toTopic(url)
 
-    const connection = new net.createConnection(port)
+    const connection = net.createConnection(port)
     connection.on('error', console.log)
 
-    this.services.set(topic.toString('hex'), connection)
+    this._services.set(topic.toString('hex'), {
+      connection,
+      url,
+      port
+    })
+
     this.swarm.join(topic, { announce: true, lookup: true })
   }
 
-  getServices () {
-    for (let [service, port] of this.services) {
-      console.log(service, 'forwards to port', port)
-    }
+  get services () {
+    return Array.from(this._services).map(([_, e]) => [e.url, e.port])
   }
 }
 
@@ -88,13 +96,13 @@ function toTopic (...args) {
   const ret = Buffer.alloc(32)
   const url = args.join('.')
 
-  const h = new hash().update(url, 'utf8')
+  const h = new Hash().update(url, 'utf8')
   return h.digest(ret)
 }
 
 module.exports = {
   Forward,
-  Reverse 
+  Reverse
 }
 
 // helper
